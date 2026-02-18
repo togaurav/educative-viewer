@@ -30,112 +30,71 @@ def courses():
     highlight_idx = None
     last_visited_topic = ""
     last_visited_index = 0
-    course_dir = root_course_dir
+    
+    current_path_details = get_current_path_details(current_user.username)
+    course_dir = current_path_details.last_visited_directory if current_path_details else root_course_dir
+    last_visited_course = current_path_details.last_visited_course if current_path_details else ""
+    
     temp_folder_path = os.path.join(OS_ROOT, "temp", current_user.username)
     delete_dir(temp_folder_path)
 
-    '''
-    Change the download button color based on the download access
-    '''
     download_button_color = '#ed4444 !important'
     current_user_details = get_current_user_details(current_user.username)
     if current_user_details.downloadaccess:
         download_button_color = '#82f382 !important'
 
+    target_folder = request.args.get("folder") or request.form.get("folder")
+    go_back = "back" in request.args or "back" in request.form
+    
+    if target_folder:
+        new_course_dir = os.path.join(course_dir, target_folder)
+        
+        # 1. Standalone HTML check
+        if os.path.isfile(new_course_dir) and target_folder.endswith(".html"):
+            commit_current_course_details(username=current_user.username,
+                                          last_visited_course=course_dir.split(os.path.sep)[-1],
+                                          last_visited_topic=target_folder,
+                                          last_visited_index=0)
+            return redirect(url_for('main.topics', topics=target_folder))
 
-    current_path_details = get_current_path_details(current_user.username)
-    if current_path_details is not None:
-        course_dir = current_path_details.last_visited_directory
-        last_visited_course = current_path_details.last_visited_course
-        current_course_details = get_current_course_details(current_user.username, last_visited_course)
-        if current_course_details is not None:
-            last_visited_topic = current_course_details.last_visited_topic
-            last_visited_index = current_course_details.last_visited_index
-
-    if request.method == "POST":
-        if request.form.get("folder"):
-            '''
-            Traversing in folders
-            '''
-            folder = request.form.get("folder")
-            new_course_dir = os.path.join(course_dir, folder)
-            
-            if os.path.isfile(new_course_dir) and folder.endswith(".html"):
-                '''
-                If it's a direct HTML file, redirect to the topics view
-                '''
-                commit_current_course_details(username=current_user.username,
-                                              last_visited_course=course_dir.split(os.path.sep)[-1],
-                                              last_visited_topic=folder,
-                                              last_visited_index=0) # Index will be recalculated in topics()
-                return redirect(url_for('main.courses') + f"/{folder}")
-
-            if not os.path.isdir(new_course_dir):
-                return redirect(url_for('main.courses'))
-
+        # 2. Directory check
+        if os.path.isdir(new_course_dir):
             course_dir = new_course_dir
-            folders = natsort.natsorted(load_folder(course_dir))
             last_visited_course = course_dir.split(os.path.sep)[-1]
-            current_course_details = get_current_course_details(current_user.username, last_visited_course)
-            if current_course_details is not None:
-                last_visited_topic = current_course_details.last_visited_topic
-                last_visited_index = current_course_details.last_visited_index
             
-            if os.path.isfile(os.path.join(course_dir, folder + ".html")):
-                '''
-                If topic.html is found inside the folder, render it
-                '''
-                commit_current_course_details(username=current_user.username,
-                                              last_visited_course=course_dir.split(os.path.sep)[-2],
-                                              last_visited_topic=last_visited_topic,
-                                              last_visited_index=last_visited_index)
-                return redirect(url_for('main.courses') + f"/{folder}")
-            else:
-                '''
-                It is a folder, traverse inside it.
-                '''
-                commit_current_path_details(username=current_user.username,
-                                            last_visited_directory=course_dir,
-                                            last_visited_course=last_visited_course)
-                '''
-                If the last visited topic is present in the folder, highlight the folder.
-                '''
-                if last_visited_topic in folders:
-                    highlight_idx = folders.index(last_visited_topic)
-
-                '''
-                If table of contents.json is present, render the html using toc
-                '''
-                toc = load_toc_if_exist(course_dir)
-                if toc:
-                    toc_items = build_toc_render_items(toc, highlight_idx)
-                    return render_template("courses_toc.html", toc_items=toc_items, folder=folder, download_button_color=download_button_color)
-                return render_template("courses.html", folder_list=folders, folder=folder, highlight_idx=highlight_idx, download_button_color=download_button_color)
-        '''
-        If above condition doesnt satisfy then Traversing out folders  but not exit the root_course_dir
-        '''
-        if len(root_course_dir) < len(course_dir):
-            course_dir = os.path.sep.join(course_dir.split(os.path.sep)[:-1])
-            folders = natsort.natsorted(load_folder(course_dir))
-            last_visited_course = course_dir.split(os.path.sep)[-1]
-            commit_current_path_details(username=current_user.username, last_visited_directory=course_dir,
+            # Check if this folder is actually a topic (contains its own name as .html)
+            if os.path.isfile(os.path.join(course_dir, target_folder + ".html")):
+                return redirect(url_for('main.topics', topics=target_folder))
+            
+            # Otherwise, traverse inside
+            commit_current_path_details(username=current_user.username,
+                                        last_visited_directory=course_dir,
                                         last_visited_course=last_visited_course)
 
-            if last_visited_topic in folders:
-                highlight_idx = folders.index(last_visited_topic)
-            return render_template("courses.html", folder_list=folders, folder=last_visited_course,
-                                   highlight_idx=highlight_idx, download_button_color=download_button_color)
-    '''
-    If above condition doesnt satisfy then it is a GET request
-    '''
+    elif go_back:
+        if len(root_course_dir) < len(course_dir):
+            course_dir = os.path.sep.join(course_dir.split(os.path.sep)[:-1])
+            last_visited_course = course_dir.split(os.path.sep)[-1]
+            commit_current_path_details(username=current_user.username, 
+                                        last_visited_directory=course_dir,
+                                        last_visited_course=last_visited_course)
+            print(f"DEBUG: back to='{course_dir}'")
+
+    # Render logic
     folders = natsort.natsorted(load_folder(course_dir))
     folder = os.path.split(course_dir)[-1]
-    if last_visited_topic in folders:
-        highlight_idx = folders.index(last_visited_topic)
+    
+    current_course_details = get_current_course_details(current_user.username, last_visited_course)
+    if current_course_details:
+        last_visited_topic = current_course_details.last_visited_topic
+        if last_visited_topic in folders:
+            highlight_idx = folders.index(last_visited_topic)
+
     toc = load_toc_if_exist(course_dir)
     if toc:
         toc_items = build_toc_render_items(toc, highlight_idx)
         return render_template("courses_toc.html", toc_items=toc_items, folder=folder, download_button_color=download_button_color)
+    
     return render_template("courses.html", folder_list=folders, folder=folder, highlight_idx=highlight_idx, download_button_color=download_button_color)
 
 
