@@ -1,0 +1,18 @@
+services:
+  educative-viewer:
+    build: .
+    container_name: educative_viewer_app
+    ports:
+      - "5001:5001"
+    environment:
+      # Use "." because the __init__.py is in the root of the WORKDIR
+      - FLASK_APP=.
+      - course_dir=/courses
+      - authtoken=112122343ff
+      - downloadtoken=112122343ff
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - /Users/om/Grokking:/courses
+      - .:/app
+    working_dir: /app
+    restart: always
