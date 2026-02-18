@@ -145,6 +145,8 @@ Endpoint to load topics.
 @main.route("/courses/<topics>", methods=['GET', 'POST'])
 @login_required
 def topics(topics):
+    from urllib.parse import unquote
+    topics = unquote(topics)
     current_path_details = get_current_path_details(current_user.username)
     course_dir = current_path_details.last_visited_directory
     last_visited_course = current_path_details.last_visited_course
@@ -152,6 +154,10 @@ def topics(topics):
     
     toc = load_toc_if_exist(course_dir)
     topic_folders = natsort.natsorted(load_topics(course_dir))
+    
+    print(f"DEBUG: topics='{topics}'")
+    print(f"DEBUG: course_dir='{course_dir}'")
+    print(f"DEBUG: topic_folders count={len(topic_folders)}")
     
     # Determine the iteration index (itr)
     itr = current_course_details.last_visited_index if current_course_details else 0
@@ -163,31 +169,29 @@ def topics(topics):
     # Find the index of the current topic in the folder list
     if topics in topic_folders:
         itr = topic_folders.index(topics)
-    elif itr >= len(topic_folders):
-        itr = 0
+        print(f"DEBUG: Exact match found at index {itr}")
+    else:
+        # Try a more fuzzy match to handle encoding quirks
+        import difflib
+        matches = difflib.get_close_matches(topics, topic_folders, n=1, cutoff=0.6)
+        if matches:
+            itr = topic_folders.index(matches[0])
+            print(f"DEBUG: Fuzzy match found: '{matches[0]}' at index {itr}")
+        else:
+            print(f"DEBUG: No match found for '{topics}'. Falling back to index {itr}")
+            if itr >= len(topic_folders):
+                itr = 0
 
     if request.method == "POST":
-        if "back" in request.form and itr > 0:
-            itr -= 1
-        elif "next" in request.form and itr < len(topic_folders) - 1:
-            itr += 1
-        elif "sidebar-topic" in request.form:
-            try:
-                itr = int(request.form.get('sidebar-topic'))
-            except (ValueError, TypeError):
-                pass
-        elif "home" in request.form:
-            return redirect(url_for('main.courses'))
-        elif request.form.get("code_filesystem"):
+        print(f"DEBUG: POST topics='{topics}', form={request.form.to_dict()}, itr={itr}")
+        if request.form.get("code_filesystem"):
             path = f"file:///{course_dir}/{topic_folders[itr]}".replace("\\", "/")
             webbrowser.open(path)
             # Stay on the same page after opening in file system
             return redirect(url_for('main.topics', topics=topics))
-
-        # Redirect to the new topic URL
-        if 0 <= itr < len(topic_folders):
-            return redirect(url_for('main.topics', topics=topic_folders[itr]))
-        return redirect(url_for('main.courses'))
+        
+        # Fallback redirect if some other POST occurs
+        return redirect(url_for('main.topics', topics=topic_folders[itr]))
 
     if not topic_folders:
         return redirect(url_for('main.courses'))
@@ -219,42 +223,25 @@ def topics(topics):
 Method to load the toc contained topics
 '''
 def topics_toc(topics, course_dir, toc, itr):
+    from urllib.parse import unquote
+    topics = unquote(topics)
     toc_items = build_toc_render_items(toc)
+    print(f"DEBUG: topics_toc topics='{topics}', itr_start={itr}")
     try:
         itr = next(i for i, toc_item in enumerate(toc_items) if toc_item['title'] == topics)
+        print(f"DEBUG: TOC match found at index {itr}")
     except StopIteration:
+        print(f"DEBUG: No TOC match found for '{topics}'")
         pass
     if request.method == "POST":
-        if "back" in request.form and itr > 0:
-            if toc_items[itr - 1]['is_category']:
-                if itr - 1 != 0:
-                    itr -= 1
-                else:
-                    itr += 1
-            itr -= 1
-        elif "next" in request.form and itr < len(toc_items) - 1:
-            if toc_items[itr + 1]['is_category']:
-                if itr + 1 != len(toc_items) - 1:
-                    itr += 1
-                else:
-                    itr -= 1
-            itr += 1
-        elif "sidebar-topic" in request.form:
-            try:
-                itr = int(request.form.get('sidebar-topic'))
-            except (ValueError, TypeError):
-                pass
-        elif "home" in request.form:
-            return redirect(url_for('main.courses'))
-        elif request.form.get("code_filesystem"):
+        print(f"DEBUG: topics_toc POST topics='{topics}', form={request.form.to_dict()}, itr={itr}")
+        if request.form.get("code_filesystem"):
             path = f"file:///{course_dir}/{toc_items[itr]['title']}".replace("\\", "/")
             webbrowser.open(path)
             return redirect(url_for('main.topics', topics=topics))
         
-        # Redirect to the new topic title URL
-        if 0 <= itr < len(toc_items):
-            return redirect(url_for('main.topics', topics=toc_items[itr]['title']))
-        return redirect(url_for('main.courses'))
+        # Fallback redirect
+        return redirect(url_for('main.topics', topics=toc_items[itr]['title']))
 
     '''
     GET request, this is used to refresh the webpage if required    
