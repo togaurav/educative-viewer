@@ -15,18 +15,26 @@ def create_dir(path):
 
 
 def check_code_present(course_dir, topic):
-    if len(os.listdir(os.path.join(course_dir, topic))) > 1:
+    topic_path = os.path.join(course_dir, topic)
+    if not os.path.isdir(topic_path):
+        return False
+    if len(os.listdir(topic_path)) > 1:
         return True
     return False
 
 
 def load_topics(course_dir):
-    folders_paths = []
-    for folder in os.listdir(course_dir):
-        folder_path = os.path.join(course_dir, folder)
-        if os.path.isdir(folder_path) and os.path.isfile(os.path.join(folder_path, folder + ".html")):
-            folders_paths.append(folder)
-    return folders_paths
+    topics = []
+    for item in os.listdir(course_dir):
+        if item.startswith(".") or item.startswith("__"):
+            continue
+        item_path = os.path.join(course_dir, item)
+        if os.path.isdir(item_path):
+            if os.path.isfile(os.path.join(item_path, item + ".html")):
+                topics.append(item)
+        elif item.endswith(".html"):
+            topics.append(item)
+    return topics
 
 
 def load_toc_if_exist(course_dir):
@@ -40,12 +48,14 @@ def load_toc_if_exist(course_dir):
 
 
 def load_folder(course_dir):
-    folders = []
-    for folder in os.listdir(course_dir):
-        folder_path = os.path.join(course_dir, folder)
-        if os.path.isdir(folder_path):
-            folders.append(folder)
-    return folders
+    items = []
+    for item in os.listdir(course_dir):
+        if item.startswith(".") or item.startswith("__"):
+            continue
+        item_path = os.path.join(course_dir, item)
+        if os.path.isdir(item_path) or item.endswith(".html"):
+            items.append(item)
+    return items
 
 
 def build_toc_render_items(toc, highlight_idx=0):

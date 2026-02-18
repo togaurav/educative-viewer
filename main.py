@@ -58,23 +58,39 @@ def courses():
             Traversing in folders
             '''
             folder = request.form.get("folder")
-            course_dir = os.path.join(course_dir, folder)
-            folders = natsort.natsorted(os.listdir(course_dir))
+            new_course_dir = os.path.join(course_dir, folder)
+            
+            if os.path.isfile(new_course_dir) and folder.endswith(".html"):
+                '''
+                If it's a direct HTML file, redirect to the topics view
+                '''
+                commit_current_course_details(username=current_user.username,
+                                              last_visited_course=course_dir.split(os.path.sep)[-1],
+                                              last_visited_topic=folder,
+                                              last_visited_index=0) # Index will be recalculated in topics()
+                return redirect(url_for('main.courses') + f"/{folder}")
+
+            if not os.path.isdir(new_course_dir):
+                return redirect(url_for('main.courses'))
+
+            course_dir = new_course_dir
+            folders = natsort.natsorted(load_folder(course_dir))
             last_visited_course = course_dir.split(os.path.sep)[-1]
             current_course_details = get_current_course_details(current_user.username, last_visited_course)
             if current_course_details is not None:
                 last_visited_topic = current_course_details.last_visited_topic
                 last_visited_index = current_course_details.last_visited_index
-            if folder + ".html" in folders:
+            
+            if os.path.isfile(os.path.join(course_dir, folder + ".html")):
                 '''
-                If topic.html is found, render the html then
+                If topic.html is found inside the folder, render it
                 '''
                 commit_current_course_details(username=current_user.username,
                                               last_visited_course=course_dir.split(os.path.sep)[-2],
                                               last_visited_topic=last_visited_topic,
                                               last_visited_index=last_visited_index)
                 return redirect(url_for('main.courses') + f"/{folder}")
-            if folder + ".html" not in folders:
+            else:
                 '''
                 It is a folder, traverse inside it.
                 '''
@@ -133,49 +149,68 @@ def topics(topics):
     course_dir = current_path_details.last_visited_directory
     last_visited_course = current_path_details.last_visited_course
     current_course_details = get_current_course_details(current_user.username, last_visited_course)
-    topic_index = current_course_details.last_visited_index
-    folders = natsort.natsorted(load_folder(course_dir))
-
-    if topics in folders:
-        topic_index = int(topics.split("-")[0])
-        commit_current_course_details(username=current_user.username,
-                                      last_visited_course=last_visited_course,
-                                      last_visited_topic=topics,
-                                      last_visited_index=topic_index)
-    itr = topic_index
+    
     toc = load_toc_if_exist(course_dir)
-    if toc:
-        return topics_toc(topics, course_dir, toc, itr)
     topic_folders = natsort.natsorted(load_topics(course_dir))
-    try:
-        itr = int(topic_folders.index(topics))
-    except ValueError:
-        pass
+    
+    # Determine the iteration index (itr)
+    itr = current_course_details.last_visited_index if current_course_details else 0
+    
+    if toc:
+        # For TOC-based courses, use the existing topics_toc logic
+        return topics_toc(topics, course_dir, toc, itr)
+        
+    # Find the index of the current topic in the folder list
+    if topics in topic_folders:
+        itr = topic_folders.index(topics)
+    elif itr >= len(topic_folders):
+        itr = 0
+
     if request.method == "POST":
         if "back" in request.form and itr > 0:
             itr -= 1
         elif "next" in request.form and itr < len(topic_folders) - 1:
             itr += 1
         elif "sidebar-topic" in request.form:
-            itr = int(request.form.get('sidebar-topic'))
+            try:
+                itr = int(request.form.get('sidebar-topic'))
+            except (ValueError, TypeError):
+                pass
         elif "home" in request.form:
             return redirect(url_for('main.courses'))
         elif request.form.get("code_filesystem"):
             path = f"file:///{course_dir}/{topic_folders[itr]}".replace("\\", "/")
             webbrowser.open(path)
-    '''
-    GET request, this is used to refresh the webpage if required    
-    '''
+            # Stay on the same page after opening in file system
+            return redirect(url_for('main.topics', topics=topics))
+
+        # Redirect to the new topic URL
+        if 0 <= itr < len(topic_folders):
+            return redirect(url_for('main.topics', topics=topic_folders[itr]))
+        return redirect(url_for('main.courses'))
+
+    if not topic_folders:
+        return redirect(url_for('main.courses'))
+
+    # Ensure index is within bounds
+    itr = max(0, min(itr, len(topic_folders) - 1))
+    current_topic = topic_folders[itr]
+
+    # Save the state correctly
     commit_current_course_details(username=current_user.username,
                                   last_visited_course=last_visited_course,
-                                  last_visited_topic=topic_folders[itr],
+                                  last_visited_topic=current_topic,
                                   last_visited_index=itr)
 
     template_folder = "/".join(course_dir[len(root_course_dir) + 1:].split(os.path.sep))
-    webpage = f"{template_folder}/{topic_folders[itr]}/{topic_folders[itr]}.html"
-    is_code_present = check_code_present(course_dir, topic_folders[itr])
+    if current_topic.endswith(".html"):
+        webpage = f"{template_folder}/{current_topic}"
+    else:
+        webpage = f"{template_folder}/{current_topic}/{current_topic}.html"
+    
+    is_code_present = not current_topic.endswith(".html") and check_code_present(course_dir, current_topic)
     rendered_html = render_template(
-        "topics.html", code_present=is_code_present, webpage=webpage, folder=f"{topic_folders[itr]}",
+        "topics.html", code_present=is_code_present, webpage=webpage, folder=f"{current_topic}",
         folder_list=topic_folders, itr=itr)
     return rendered_html
 
@@ -205,12 +240,21 @@ def topics_toc(topics, course_dir, toc, itr):
                     itr -= 1
             itr += 1
         elif "sidebar-topic" in request.form:
-            itr = int(request.form.get('sidebar-topic'))
+            try:
+                itr = int(request.form.get('sidebar-topic'))
+            except (ValueError, TypeError):
+                pass
         elif "home" in request.form:
             return redirect(url_for('main.courses'))
         elif request.form.get("code_filesystem"):
             path = f"file:///{course_dir}/{toc_items[itr]['title']}".replace("\\", "/")
             webbrowser.open(path)
+            return redirect(url_for('main.topics', topics=topics))
+        
+        # Redirect to the new topic title URL
+        if 0 <= itr < len(toc_items):
+            return redirect(url_for('main.topics', topics=toc_items[itr]['title']))
+        return redirect(url_for('main.courses'))
 
     '''
     GET request, this is used to refresh the webpage if required    
@@ -222,10 +266,15 @@ def topics_toc(topics, course_dir, toc, itr):
                                   last_visited_index=itr)
 
     template_folder = "/".join(course_dir[len(root_course_dir) + 1:].split(os.path.sep))
-    webpage = f"{template_folder}/{toc_items[itr]['title']}/{toc_items[itr]['title']}.html"
-    is_code_present = check_code_present(course_dir, toc_items[itr]['title'])
+    topic_item = toc_items[itr]['title']
+    if topic_item.endswith(".html"):
+        webpage = f"{template_folder}/{topic_item}"
+    else:
+        webpage = f"{template_folder}/{topic_item}/{topic_item}.html"
+    
+    is_code_present = check_code_present(course_dir, topic_item) if not topic_item.endswith(".html") else False
     rendered_html = render_template(
-        "topics_toc.html", code_present=is_code_present, webpage=webpage, folder=f"{toc_items[itr]['title']}",
+        "topics_toc.html", code_present=is_code_present, webpage=webpage, folder=f"{topic_item}",
         toc_items=toc_items, itr=itr)
     return rendered_html
 
