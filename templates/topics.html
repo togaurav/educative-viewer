@@ -115,7 +115,8 @@
 
 <body style="zoom: 100%">
     <form action="" method="POST">
-        <div id="main-content" style="height: 100vh;">
+        <div id="main-content" [([(=if is_media=)])] style="height: 100vh; overflow: hidden;" [([(=else=)])]
+            style="height: auto; overflow: visible;" [([(=endif=)])]>
             [([(= if is_media =)])]
             <iframe src="[([( url_for('main.view_file', filename=current_topic) )])]"
                 style="width: 100%; height: 100%; border: none;"></iframe>

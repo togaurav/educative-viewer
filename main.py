@@ -49,25 +49,22 @@ def courses():
     if target_folder:
         new_course_dir = os.path.join(course_dir, target_folder)
         
-        # 1. Standalone HTML check
+        # 1. Standalone File check (HTML, HTM, PDF, Image, Video, etc.)
         if os.path.isfile(new_course_dir):
-            if target_folder.lower().endswith((".html", ".htm")):
-                commit_current_course_details(username=current_user.username,
-                                              last_visited_course=course_dir.split(os.path.sep)[-1],
-                                              last_visited_topic=target_folder,
-                                              last_visited_index=0)
-                return redirect(url_for('main.topics', topics=target_folder))
-            else:
-                # Other browser-openable files (PDF, image, text, etc.)
-                return redirect(url_for('main.view_file', filename=target_folder))
+            commit_current_course_details(username=current_user.username,
+                                          last_visited_course=course_dir.split(os.path.sep)[-1],
+                                          last_visited_topic=target_folder,
+                                          last_visited_index=0)
+            return redirect(url_for('main.topics', topics=target_folder))
 
         # 2. Directory check
         if os.path.isdir(new_course_dir):
             course_dir = new_course_dir
             last_visited_course = course_dir.split(os.path.sep)[-1]
             
-            # Check if this folder is actually a topic (contains its own name as .html)
-            if os.path.isfile(os.path.join(course_dir, target_folder + ".html")):
+            # Check if this folder is actually a topic (contains its own name as .html or .htm)
+            if os.path.isfile(os.path.join(course_dir, target_folder + ".html")) or \
+               os.path.isfile(os.path.join(course_dir, target_folder + ".htm")):
                 return redirect(url_for('main.topics', topics=target_folder))
             
             # Otherwise, traverse inside
