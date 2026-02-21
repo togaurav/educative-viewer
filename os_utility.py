@@ -18,6 +18,7 @@ def check_code_present(course_dir, topic):
     topic_path = os.path.join(course_dir, topic)
     if not os.path.isdir(topic_path):
         return False
+    # If it's a topic folder, it usually has more than just the index .html/.htm file
     if len(os.listdir(topic_path)) > 1:
         return True
     return False
@@ -25,13 +26,15 @@ def check_code_present(course_dir, topic):
 
 def load_topics(course_dir):
     topics = []
-    browser_extensions = {'.html', '.pdf', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3'}
+    browser_extensions = {'.html', '.htm', '.pdf', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3'}
     for item in os.listdir(course_dir):
         if item.startswith(".") or item.startswith("__"):
             continue
         item_path = os.path.join(course_dir, item)
         if os.path.isdir(item_path):
-            if os.path.isfile(os.path.join(item_path, item + ".html")):
+            # Check for name.html or name.htm
+            if os.path.isfile(os.path.join(item_path, item + ".html")) or \
+               os.path.isfile(os.path.join(item_path, item + ".htm")):
                 topics.append(item)
         else:
             _, ext = os.path.splitext(item)
@@ -53,7 +56,7 @@ def load_toc_if_exist(course_dir):
 def load_folder(course_dir):
     items = []
     # Extensions that can typically be opened/previewed in a browser
-    browser_extensions = {'.html', '.pdf', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3'}
+    browser_extensions = {'.html', '.htm', '.pdf', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3'}
     for item in os.listdir(course_dir):
         if item.startswith(".") or item.startswith("__"):
             continue

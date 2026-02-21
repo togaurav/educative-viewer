@@ -51,7 +51,7 @@ def courses():
         
         # 1. Standalone HTML check
         if os.path.isfile(new_course_dir):
-            if target_folder.endswith(".html"):
+            if target_folder.lower().endswith((".html", ".htm")):
                 commit_current_course_details(username=current_user.username,
                                               last_visited_course=course_dir.split(os.path.sep)[-1],
                                               last_visited_topic=target_folder,
@@ -170,12 +170,16 @@ def topics(topics):
                                   last_visited_index=itr)
 
     template_folder = "/".join(course_dir[len(root_course_dir) + 1:].split(os.path.sep))
-    if current_topic.endswith(".html"):
+    if current_topic.lower().endswith((".html", ".htm")):
         webpage = f"{template_folder}/{current_topic}"
     else:
-        webpage = f"{template_folder}/{current_topic}/{current_topic}.html"
+        # Check if it's a folder containing name.html or name.htm
+        if os.path.isfile(os.path.join(course_dir, current_topic, current_topic + ".html")):
+            webpage = f"{template_folder}/{current_topic}/{current_topic}.html"
+        else:
+            webpage = f"{template_folder}/{current_topic}/{current_topic}.htm"
     
-    is_code_present = not current_topic.endswith(".html") and check_code_present(course_dir, current_topic)
+    is_code_present = not current_topic.lower().endswith((".html", ".htm")) and check_code_present(course_dir, current_topic)
     
     # Detect if it's a media file that should be shown in an iframe
     media_extensions = ('.pdf', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3')
@@ -222,12 +226,15 @@ def topics_toc(topics, course_dir, toc, itr):
 
     template_folder = "/".join(course_dir[len(root_course_dir) + 1:].split(os.path.sep))
     topic_item = toc_items[itr]['title']
-    if topic_item.endswith(".html"):
+    if topic_item.lower().endswith((".html", ".htm")):
         webpage = f"{template_folder}/{topic_item}"
     else:
-        webpage = f"{template_folder}/{topic_item}/{topic_item}.html"
+        if os.path.isfile(os.path.join(course_dir, topic_item, topic_item + ".html")):
+            webpage = f"{template_folder}/{topic_item}/{topic_item}.html"
+        else:
+            webpage = f"{template_folder}/{topic_item}/{topic_item}.htm"
     
-    is_code_present = check_code_present(course_dir, topic_item) if not topic_item.endswith(".html") else False
+    is_code_present = check_code_present(course_dir, topic_item) if not topic_item.lower().endswith((".html", ".htm")) else False
     
     # Detect if it's a media file
     media_extensions = ('.pdf', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3')
