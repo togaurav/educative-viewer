@@ -124,8 +124,13 @@
 <body style="zoom: 100%">
 
     <form action="[([( url_for('main.courses') )])]/topics" method="POST">
-        <div id="main-content">
+        <div id="main-content" style="height: 100vh;">
+            [([(= if is_media =)])]
+            <iframe src="[([( url_for('main.view_file', filename=current_topic) )])]"
+                style="width: 100%; height: 100%; border: none;"></iframe>
+            [([(= else =)])]
             [([(= include webpage =)])]
+            [([(= endif =)])]
         </div>
         <div class='sidebar'>
             <ul id="sidebar-ul">

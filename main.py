@@ -50,12 +50,16 @@ def courses():
         new_course_dir = os.path.join(course_dir, target_folder)
         
         # 1. Standalone HTML check
-        if os.path.isfile(new_course_dir) and target_folder.endswith(".html"):
-            commit_current_course_details(username=current_user.username,
-                                          last_visited_course=course_dir.split(os.path.sep)[-1],
-                                          last_visited_topic=target_folder,
-                                          last_visited_index=0)
-            return redirect(url_for('main.topics', topics=target_folder))
+        if os.path.isfile(new_course_dir):
+            if target_folder.endswith(".html"):
+                commit_current_course_details(username=current_user.username,
+                                              last_visited_course=course_dir.split(os.path.sep)[-1],
+                                              last_visited_topic=target_folder,
+                                              last_visited_index=0)
+                return redirect(url_for('main.topics', topics=target_folder))
+            else:
+                # Other browser-openable files (PDF, image, text, etc.)
+                return redirect(url_for('main.view_file', filename=target_folder))
 
         # 2. Directory check
         if os.path.isdir(new_course_dir):
@@ -172,9 +176,14 @@ def topics(topics):
         webpage = f"{template_folder}/{current_topic}/{current_topic}.html"
     
     is_code_present = not current_topic.endswith(".html") and check_code_present(course_dir, current_topic)
+    
+    # Detect if it's a media file that should be shown in an iframe
+    media_extensions = ('.pdf', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3')
+    is_media = current_topic.lower().endswith(media_extensions)
+    
     rendered_html = render_template(
         "topics.html", code_present=is_code_present, webpage=webpage, folder=f"{current_topic}",
-        folder_list=topic_folders, itr=itr)
+        folder_list=topic_folders, itr=itr, is_media=is_media, current_topic=current_topic)
     return rendered_html
 
 
@@ -219,9 +228,14 @@ def topics_toc(topics, course_dir, toc, itr):
         webpage = f"{template_folder}/{topic_item}/{topic_item}.html"
     
     is_code_present = check_code_present(course_dir, topic_item) if not topic_item.endswith(".html") else False
+    
+    # Detect if it's a media file
+    media_extensions = ('.pdf', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3')
+    is_media = topic_item.lower().endswith(media_extensions)
+
     rendered_html = render_template(
         "topics_toc.html", code_present=is_code_present, webpage=webpage, folder=f"{topic_item}",
-        toc_items=toc_items, itr=itr)
+        toc_items=toc_items, itr=itr, is_media=is_media, current_topic=topic_item)
     return rendered_html
 
 
@@ -288,6 +302,14 @@ def download(folder):
         shutil.make_archive(temp_folder_course_dir, 'zip', temp_folder_course_dir)
         return redirect(url_for('main.courses') + f"/tmp/{folder}/{folder}.zip")
     return redirect(url_for('main.courses'))
+
+
+@main.route("/courses/view_file/<path:filename>")
+@login_required
+def view_file(filename):
+    current_path_details = get_current_path_details(current_user.username)
+    course_dir = current_path_details.last_visited_directory if current_path_details else root_course_dir
+    return send_from_directory(course_dir, filename)
 
 
 @main.route("/courses/tmp/<path:filepath>", methods=['POST', 'GET'])

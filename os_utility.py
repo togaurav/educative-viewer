@@ -25,6 +25,7 @@ def check_code_present(course_dir, topic):
 
 def load_topics(course_dir):
     topics = []
+    browser_extensions = {'.html', '.pdf', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3'}
     for item in os.listdir(course_dir):
         if item.startswith(".") or item.startswith("__"):
             continue
@@ -32,8 +33,10 @@ def load_topics(course_dir):
         if os.path.isdir(item_path):
             if os.path.isfile(os.path.join(item_path, item + ".html")):
                 topics.append(item)
-        elif item.endswith(".html"):
-            topics.append(item)
+        else:
+            _, ext = os.path.splitext(item)
+            if ext.lower() in browser_extensions:
+                topics.append(item)
     return topics
 
 
@@ -49,12 +52,18 @@ def load_toc_if_exist(course_dir):
 
 def load_folder(course_dir):
     items = []
+    # Extensions that can typically be opened/previewed in a browser
+    browser_extensions = {'.html', '.pdf', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3'}
     for item in os.listdir(course_dir):
         if item.startswith(".") or item.startswith("__"):
             continue
         item_path = os.path.join(course_dir, item)
-        if os.path.isdir(item_path) or item.endswith(".html"):
+        if os.path.isdir(item_path):
             items.append(item)
+        else:
+            _, ext = os.path.splitext(item)
+            if ext.lower() in browser_extensions:
+                items.append(item)
     return items
 
 
