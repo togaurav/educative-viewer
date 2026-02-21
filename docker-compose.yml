@@ -14,5 +14,6 @@ services:
     volumes:
       - /Users/om/Grokking:/courses
       - .:/app
+      - ~/EducativeViewer:/root/EducativeViewer
     working_dir: /app
     restart: always
