@@ -110,8 +110,9 @@ textarea {
 
 #sidebar-caret-collapse-2,
 div[aria-label*="Your Privacy"],
-div[class*="ed-grid"] > nav,
-div[id*='view-collection-article-content-root'] > :not(#handleArticleScroll):not(:last-child), div[id*='view-collection-article-content-root']:not(:has(#handleArticleScroll)) > :not(:last-child),
+div[class*="ed-grid"]>nav,
+div[id*='view-collection-article-content-root']> :not(#handleArticleScroll):not(:last-child),
+div[id*='view-collection-article-content-root']:not(:has(#handleArticleScroll))> :not(:last-child),
 div[aria-labelledby*="simple-modal-title"],
 nav,
 header,
@@ -120,6 +121,7 @@ div[class*="PALBanner_container"] {
 }
 
 @media only screen and (min-width: 0px) and (max-width: 1100px) {
+
     img,
     svg {
         width: 100% !important;
@@ -139,29 +141,41 @@ div[class*="sidebar"] {
     overflow-y: auto;
     background-color: rgba(21, 21, 30, 1);
     transition: left 0.25s ease;
+    z-index: 10000;
 }
 
-a[class*="navbar-item"], a#open-btn.navbar-item, form[class*="navbar-item"], input[class*="navbar-item"]{
+a[class*="navbar-item"],
+a#open-btn.navbar-item,
+form[class*="navbar-item"],
+input[class*="navbar-item"] {
     background-color: rgba(21, 21, 30, 1) !important;
     color: white !important;
 }
-a.navbar-item:hover, a#open-btn.navbar-item:hover, form[class*="navbar-item"]:hover, input[class*="navbar-item"]:hover{
+
+a.navbar-item:hover,
+a#open-btn.navbar-item:hover,
+form[class*="navbar-item"]:hover,
+input[class*="navbar-item"]:hover {
     background-color: #00b89c !important;
     color: white !important;
 }
-#navbarMenuHeroA{
+
+#navbarMenuHeroA {
     position: fixed;
     left: 0px;
     top: 0px;
     background-color: rgba(21, 21, 30, 1);
+    z-index: 10001;
 }
-div[class*="navbar-start"]{
+
+div[class*="navbar-start"] {
     width: 230px;
     position: fixed;
     left: 36px;
     top: 0px;
     background-color: rgba(21, 21, 30, 1);
     transition: left 0.25s ease;
+    z-index: 10001;
 }
 
 #sidebar-ul {
@@ -213,7 +227,8 @@ div[class*="navbar-start"]{
         left: -300px;
         /* position: absolute; */
     }
-    div[class*="navbar-start topic"]{
+
+    div[class*="navbar-start topic"] {
         left: -300px;
         /* position: absolute; */
     }
@@ -224,7 +239,10 @@ div[class*="navbar-start"]{
 }
 
 @media screen and (max-width: 1400px) {
-    div[class*="container"], #navbarMenuHeroA, div[class*="navbar-start"] {
+
+    div[class*="container"],
+    #navbarMenuHeroA,
+    div[class*="navbar-start"] {
         display: flex;
         background: rgba(21, 21, 30, 1);
     }

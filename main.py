@@ -166,25 +166,22 @@ def topics(topics):
                                   last_visited_topic=current_topic,
                                   last_visited_index=itr)
 
-    template_folder = "/".join(course_dir[len(root_course_dir) + 1:].split(os.path.sep))
+    topic_base = current_topic
     if current_topic.lower().endswith((".html", ".htm")):
-        webpage = f"{template_folder}/{current_topic}"
+        content_url = url_for('main.view_file', filename=current_topic)
     else:
         # Check if it's a folder containing name.html or name.htm
         if os.path.isfile(os.path.join(course_dir, current_topic, current_topic + ".html")):
-            webpage = f"{template_folder}/{current_topic}/{current_topic}.html"
+            content_url = url_for('main.view_file', filename=f"{current_topic}/{current_topic}.html")
         else:
-            webpage = f"{template_folder}/{current_topic}/{current_topic}.htm"
+            content_url = url_for('main.view_file', filename=f"{current_topic}/{current_topic}.htm")
     
     is_code_present = not current_topic.lower().endswith((".html", ".htm")) and check_code_present(course_dir, current_topic)
     
-    # Detect if it's a media file that should be shown in an iframe
-    media_extensions = ('.pdf', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3')
-    is_media = current_topic.lower().endswith(media_extensions)
-    
+    # All topics will now be rendered via iframe for isolation
     rendered_html = render_template(
-        "topics.html", code_present=is_code_present, webpage=webpage, folder=f"{current_topic}",
-        folder_list=topic_folders, itr=itr, is_media=is_media, current_topic=current_topic)
+        "topics.html", code_present=is_code_present, content_url=content_url, folder=f"{current_topic}",
+        folder_list=topic_folders, itr=itr, current_topic=current_topic)
     return rendered_html
 
 
@@ -221,25 +218,21 @@ def topics_toc(topics, course_dir, toc, itr):
                                   last_visited_topic=toc_items[itr]['title'],
                                   last_visited_index=itr)
 
-    template_folder = "/".join(course_dir[len(root_course_dir) + 1:].split(os.path.sep))
     topic_item = toc_items[itr]['title']
     if topic_item.lower().endswith((".html", ".htm")):
-        webpage = f"{template_folder}/{topic_item}"
+        content_url = url_for('main.view_file', filename=topic_item)
     else:
         if os.path.isfile(os.path.join(course_dir, topic_item, topic_item + ".html")):
-            webpage = f"{template_folder}/{topic_item}/{topic_item}.html"
+            content_url = url_for('main.view_file', filename=f"{topic_item}/{topic_item}.html")
         else:
-            webpage = f"{template_folder}/{topic_item}/{topic_item}.htm"
+            content_url = url_for('main.view_file', filename=f"{topic_item}/{topic_item}.htm")
     
     is_code_present = check_code_present(course_dir, topic_item) if not topic_item.lower().endswith((".html", ".htm")) else False
     
-    # Detect if it's a media file
-    media_extensions = ('.pdf', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3')
-    is_media = topic_item.lower().endswith(media_extensions)
-
+    # Render everything via iframe
     rendered_html = render_template(
-        "topics_toc.html", code_present=is_code_present, webpage=webpage, folder=f"{topic_item}",
-        toc_items=toc_items, itr=itr, is_media=is_media, current_topic=topic_item)
+        "topics_toc.html", code_present=is_code_present, content_url=content_url, folder=f"{topic_item}",
+        toc_items=toc_items, itr=itr, current_topic=topic_item)
     return rendered_html
 
 
