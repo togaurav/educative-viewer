@@ -1,0 +1,17 @@
+{
+  "name": "Educative Viewer",
+  "short_name": "EduViewer",
+  "description": "A premium course viewer for offline and online content.",
+  "start_url": "/edu-viewer/",
+  "display": "standalone",
+  "background_color": "#15151e",
+  "theme_color": "#15151e",
+  "icons": [
+    {
+      "src": "/edu-viewer/static/asset/pwa-icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

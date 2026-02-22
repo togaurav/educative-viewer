@@ -24,6 +24,16 @@ def index():
 '''
 Endpoint to load the course list directory
 '''
+@main.route('/manifest.json')
+def manifest():
+    return send_from_directory('static', 'manifest.json')
+
+
+@main.route('/sw.js')
+def service_worker():
+    return send_from_directory('static', 'sw.js')
+
+
 @main.route('/courses', methods=['GET', 'POST'])
 @login_required
 def courses():
