@@ -166,8 +166,8 @@ def topics(topics):
                                   last_visited_topic=current_topic,
                                   last_visited_index=itr)
 
-    topic_base = current_topic
-    if current_topic.lower().endswith((".html", ".htm")):
+    media_extensions = ('.pdf', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3')
+    if current_topic.lower().endswith((".html", ".htm") + media_extensions):
         content_url = url_for('main.view_file', filename=current_topic)
     else:
         # Check if it's a folder containing name.html or name.htm
@@ -176,7 +176,7 @@ def topics(topics):
         else:
             content_url = url_for('main.view_file', filename=f"{current_topic}/{current_topic}.htm")
     
-    is_code_present = not current_topic.lower().endswith((".html", ".htm")) and check_code_present(course_dir, current_topic)
+    is_code_present = not current_topic.lower().endswith((".html", ".htm") + media_extensions) and check_code_present(course_dir, current_topic)
     
     # All topics will now be rendered via iframe for isolation
     rendered_html = render_template(
@@ -218,8 +218,9 @@ def topics_toc(topics, course_dir, toc, itr):
                                   last_visited_topic=toc_items[itr]['title'],
                                   last_visited_index=itr)
 
+    media_extensions = ('.pdf', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3')
     topic_item = toc_items[itr]['title']
-    if topic_item.lower().endswith((".html", ".htm")):
+    if topic_item.lower().endswith((".html", ".htm") + media_extensions):
         content_url = url_for('main.view_file', filename=topic_item)
     else:
         if os.path.isfile(os.path.join(course_dir, topic_item, topic_item + ".html")):
@@ -227,7 +228,7 @@ def topics_toc(topics, course_dir, toc, itr):
         else:
             content_url = url_for('main.view_file', filename=f"{topic_item}/{topic_item}.htm")
     
-    is_code_present = check_code_present(course_dir, topic_item) if not topic_item.lower().endswith((".html", ".htm")) else False
+    is_code_present = check_code_present(course_dir, topic_item) if not topic_item.lower().endswith((".html", ".htm") + media_extensions) else False
     
     # Render everything via iframe
     rendered_html = render_template(
