@@ -216,6 +216,20 @@ div[class*="navbar-start"] {
     white-space: normal;
 }
 
+.course-nav-container {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100%;
+}
+
+.course-nav-container .btn-file {
+    width: 100% !important;
+    margin-bottom: 5px !important;
+    text-align: left !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
 #main-content {
     /* left: 150px !important; */
     position: relative;
