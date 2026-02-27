@@ -12,7 +12,8 @@ services:
       - downloadtoken=112122343ff
       - PYTHONUNBUFFERED=1
     volumes:
-      - /Users/om/Grokking:/courses
+      - /Users/om/Grokking:/courses/Grokking
+      - /Volumes/ED/CodingBlocks:/courses/CodingBlocks
       - .:/app
       - ~/EducativeViewer:/root/EducativeViewer
     working_dir: /app
