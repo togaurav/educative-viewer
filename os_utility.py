@@ -26,7 +26,7 @@ def check_code_present(course_dir, topic):
 
 def load_topics(course_dir):
     topics = []
-    browser_extensions = {'.html', '.htm', '.pdf', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3'}
+    browser_extensions = {'.html', '.htm', '.pdf', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3', '.m4v', '.avi', '.mkv', '.wmv'}
     for item in os.listdir(course_dir):
         if item.startswith(".") or item.startswith("__"):
             continue
@@ -56,7 +56,7 @@ def load_toc_if_exist(course_dir):
 def load_folder(course_dir):
     items = []
     # Extensions that can typically be opened/previewed in a browser
-    browser_extensions = {'.html', '.htm', '.pdf', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3'}
+    browser_extensions = {'.html', '.htm', '.pdf', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3', '.m4v', '.avi', '.mkv', '.wmv'}
     for item in os.listdir(course_dir):
         if item.startswith(".") or item.startswith("__"):
             continue

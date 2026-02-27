@@ -176,7 +176,7 @@ def topics(topics):
                                   last_visited_topic=current_topic,
                                   last_visited_index=itr)
 
-    media_extensions = ('.pdf', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3')
+    media_extensions = ('.pdf', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3', '.m4v', '.avi', '.mkv', '.wmv')
     if current_topic.lower().endswith((".html", ".htm") + media_extensions):
         content_url = url_for('main.view_file', filename=current_topic)
     else:
@@ -228,7 +228,7 @@ def topics_toc(topics, course_dir, toc, itr):
                                   last_visited_topic=toc_items[itr]['title'],
                                   last_visited_index=itr)
 
-    media_extensions = ('.pdf', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3')
+    media_extensions = ('.pdf', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3', '.m4v', '.avi', '.mkv', '.wmv')
     topic_item = toc_items[itr]['title']
     if topic_item.lower().endswith((".html", ".htm") + media_extensions):
         content_url = url_for('main.view_file', filename=topic_item)
