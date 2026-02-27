@@ -127,8 +127,8 @@
         <div id="main-content"
             style="height: 100vh; overflow: hidden; background: black; display: flex; justify-content: center; align-items: center;">
             [([(= if content_url.lower().endswith(('.mp4', '.webm', '.m4v', '.avi', '.mkv', '.wmv')) =)])]
-            <video controls style="max-width: 100%; max-height: 100%; width: 100%;">
-                <source src="[([(content_url)])]" type="video/[([(content_url.split('.')[-1].lower())])]">
+            <video controls autoplay style="max-width: 100%; max-height: 100%; width: 100%;">
+                <source src="[([(content_url)])]">
                 Your browser does not support the video tag.
             </video>
             [([(= else =)])]
