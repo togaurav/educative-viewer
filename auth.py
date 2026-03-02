@@ -7,7 +7,6 @@ from . import db
 
 auth = Blueprint('auth', __name__)
 authtoken = os.getenv('authtoken', '')
-downloadtoken = os.getenv('downloadtoken', '')
 
 @auth.route('/login')
 def login():
@@ -46,7 +45,6 @@ def signup_post():
     username = request.form.get('username')
     password = request.form.get('password')
     authtoken_fromreq = request.form.get('authtoken')
-    downloadtoken_fromreq = request.form.get('downloadtoken')
     
     # if this returns a user, then the email already exists in database
     user = User.query.filter_by(email=email).first(
@@ -61,8 +59,7 @@ def signup_post():
 
     # create new user with the form data. Hash the password so plaintext version isn't saved.
     new_user = User(email=email, username=username,
-                    password=generate_password_hash(password, method='pbkdf2:sha256'),
-                    downloadaccess=downloadtoken_fromreq==downloadtoken)
+                    password=generate_password_hash(password, method='pbkdf2:sha256'))
 
     # add the new user to the database
     db.session.add(new_user)

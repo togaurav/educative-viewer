@@ -15,7 +15,6 @@ cd ..
 export course_dir="/Users/om/Grokking"
 export FLASK_APP="educative-viewer"
 export authtoken="112122343ff"
-export downloadtoken="112122343ff"
 
 # Run Flask app
 flask run --host=0.0.0.0 --port=5001

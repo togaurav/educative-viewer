@@ -10,7 +10,6 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(100), unique=True)
     password = db.Column(db.String(100))
     username = db.Column(db.String(1000))
-    downloadaccess = db.Column(db.Boolean)
 
 
 class CourseDetails(db.Model):
@@ -30,3 +29,11 @@ class CurrentPath(db.Model):
     username = db.Column(db.String(1000), primary_key=True)
     last_visited_directory = db.Column(db.String(1000))
     last_visited_course = db.Column(db.String(1000))
+
+
+class Bookmark(db.Model):
+    __tablename__ = 'bookmark'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(1000))
+    course_name = db.Column(db.String(1000))
+    course_dir = db.Column(db.String(1000))

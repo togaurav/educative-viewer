@@ -134,12 +134,13 @@
                         <!-- <h2 class="has-text-white navbar-item is-centered navbar-end">Educative Viewer</h2> -->
                         <a id="open-btn" class="navbar-item" onclick="openNav()" type="button">☰</a>
                         <div class="navbar-start topic">
-                            <a href="[([( url_for('main.index') )])]" class="navbar-item">
+                            [([(= if current_user.is_authenticated =)])]
+                            <a href="[([( url_for('main.courses', reset=1) )])]" class="navbar-item">
                                 Home
                             </a>
-                            [([(= if current_user.is_authenticated =)])]
-                            <a href="[([( url_for('main.courses') )])]" class="navbar-item">
-                                Courses
+                            [([(= else =)])]
+                            <a href="[([( url_for('main.index') )])]" class="navbar-item">
+                                Home
                             </a>
                             [([(= endif =)])]
                             [([(= if current_user.is_authenticated =)])]

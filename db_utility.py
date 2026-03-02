@@ -1,4 +1,4 @@
-from .models import CurrentPath, CourseDetails, User
+from .models import CurrentPath, CourseDetails, User, Bookmark
 from . import db
 
 
@@ -34,3 +34,24 @@ def get_current_user_details(username):
 def commit_current_user_details(current_user):
     db.session.merge(current_user)
     db.session.commit()
+
+
+def get_bookmarks(username):
+    return Bookmark.query.filter_by(username=username).all()
+
+def add_bookmark(username, course_name, course_dir):
+    bookmark = Bookmark(username=username, course_name=course_name, course_dir=course_dir)
+    db.session.add(bookmark)
+    db.session.commit()
+
+def remove_bookmark(username, course_name, course_dir):
+    bookmark = Bookmark.query.filter_by(username=username, course_name=course_name, course_dir=course_dir).first()
+    if bookmark:
+        db.session.delete(bookmark)
+        db.session.commit()
+
+def is_bookmarked(username, course_name, course_dir):
+    return Bookmark.query.filter_by(username=username, course_name=course_name, course_dir=course_dir).first() is not None
+
+def get_bookmark_by_id(bookmark_id):
+    return Bookmark.query.get(bookmark_id)

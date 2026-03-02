@@ -9,7 +9,6 @@ services:
       - FLASK_APP=.
       - course_dir=/courses
       - authtoken=112122343ff
-      - downloadtoken=112122343ff
       - PYTHONUNBUFFERED=1
     volumes:
       - /Users/om/Grokking:/courses/Grokking

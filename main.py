@@ -6,8 +6,8 @@ import natsort
 import os
 import shutil
 
-from .db_utility import commit_current_user_details, get_current_path_details, get_current_course_details, commit_current_course_details, \
-    commit_current_path_details, get_current_user_details
+from .db_utility import commit_current_user_details, get_current_path_details, get_current_course_details, \
+    commit_current_path_details, get_current_user_details, get_bookmarks, add_bookmark, remove_bookmark, is_bookmarked, get_bookmark_by_id
 from .os_utility import check_code_present, create_dir, delete_dir, load_topics, load_toc_if_exist, build_toc_render_items, \
     load_folder, build_folder_structure_for_monaco_sidebar
 
@@ -16,8 +16,18 @@ root_course_dir = os.getenv('course_dir', '.')
 OS_ROOT = os.path.join(os.path.expanduser('~'), 'EducativeViewer')
 
 
+@main.context_processor
+def inject_bookmarks():
+    if current_user.is_authenticated:
+        bookmarks = get_bookmarks(current_user.username)
+        return dict(bookmarks=bookmarks)
+    return dict(bookmarks=[])
+
+
 @main.route('/')
 def index():
+    if current_user.is_authenticated:
+        return redirect(url_for('main.courses', reset=1))
     return render_template('index.html')
 
 
@@ -37,6 +47,10 @@ def service_worker():
 @main.route('/courses', methods=['GET', 'POST'])
 @login_required
 def courses():
+    if request.args.get('reset'):
+        commit_current_path_details(current_user.username, root_course_dir, "")
+        return redirect(url_for('main.courses'))
+
     highlight_idx = None
     last_visited_topic = ""
     last_visited_index = 0
@@ -48,10 +62,7 @@ def courses():
     temp_folder_path = os.path.join(OS_ROOT, "temp", current_user.username)
     delete_dir(temp_folder_path)
 
-    download_button_color = '#ed4444 !important'
     current_user_details = get_current_user_details(current_user.username)
-    if current_user_details.downloadaccess:
-        download_button_color = '#82f382 !important'
 
     target_folder = request.args.get("folder") or request.form.get("folder")
     go_back = "back" in request.args or "back" in request.form
@@ -61,10 +72,6 @@ def courses():
         
         # 1. Standalone File check (HTML, HTM, PDF, Image, Video, etc.)
         if os.path.isfile(new_course_dir):
-            commit_current_course_details(username=current_user.username,
-                                          last_visited_course=course_dir.split(os.path.sep)[-1],
-                                          last_visited_topic=target_folder,
-                                          last_visited_index=0)
             return redirect(url_for('main.topics', topics=target_folder))
 
         # 2. Directory check
@@ -102,11 +109,12 @@ def courses():
             highlight_idx = folders.index(last_visited_topic)
 
     toc = load_toc_if_exist(course_dir)
+    is_bm = is_bookmarked(current_user.username, folder, course_dir)
     if toc:
         toc_items = build_toc_render_items(toc, highlight_idx)
-        return render_template("courses_toc.html", toc_items=toc_items, folder=folder, download_button_color=download_button_color)
+        return render_template("courses_toc.html", toc_items=toc_items, folder=folder, is_bookmarked=is_bm, course_dir=course_dir)
     
-    return render_template("courses.html", folder_list=folders, folder=folder, highlight_idx=highlight_idx, download_button_color=download_button_color)
+    return render_template("courses.html", folder_list=folders, folder=folder, highlight_idx=highlight_idx, is_bookmarked=is_bm, course_dir=course_dir)
 
 
 '''
@@ -170,12 +178,6 @@ def topics(topics):
     itr = max(0, min(itr, len(topic_folders) - 1))
     current_topic = topic_folders[itr]
 
-    # Save the state correctly
-    commit_current_course_details(username=current_user.username,
-                                  last_visited_course=last_visited_course,
-                                  last_visited_topic=current_topic,
-                                  last_visited_index=itr)
-
     media_extensions = ('.pdf', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3', '.m4v', '.avi', '.mkv', '.wmv')
     if current_topic.lower().endswith((".html", ".htm") + media_extensions):
         content_url = url_for('main.view_file', filename=current_topic)
@@ -223,10 +225,6 @@ def topics_toc(topics, course_dir, toc, itr):
     GET request, this is used to refresh the webpage if required    
     '''
     last_visited_course = course_dir.split(os.path.sep)[-1]
-    commit_current_course_details(username=current_user.username,
-                                  last_visited_course=last_visited_course,
-                                  last_visited_topic=toc_items[itr]['title'],
-                                  last_visited_index=itr)
 
     media_extensions = ('.pdf', '.txt', '.jpg', '.jpeg', '.png', '.gif', '.mp4', '.webm', '.mp3', '.m4v', '.avi', '.mkv', '.wmv')
     topic_item = toc_items[itr]['title']
@@ -285,33 +283,6 @@ def file_content(filename):
     return send_file(file_path)
 
 
-'''
-Endpoint to download the folder as zip
-'''
-@main.route('/courses/download/<folder>', methods=['POST', 'GET'])
-@login_required
-def download(folder):
-    course_dir = root_course_dir
-    current_path_details = get_current_path_details(current_user.username)
-    if current_path_details is not None:
-        course_dir = current_path_details.last_visited_directory
-        
-    if request.method == "POST":
-        if not current_user.downloadaccess:
-            return render_template("downloadaccess.html")
-        '''
-        Copy the course directory to temp folder and zip it
-        '''
-        temp_folder_path = os.path.join(OS_ROOT, "temp", current_user.username, folder)
-        delete_dir(temp_folder_path)
-        create_dir(temp_folder_path)
-        temp_folder_course_dir = os.path.join(temp_folder_path, folder)
-        shutil.copytree(course_dir, temp_folder_course_dir)
-        shutil.make_archive(temp_folder_course_dir, 'zip', temp_folder_course_dir)
-        return redirect(url_for('main.courses') + f"/tmp/{folder}/{folder}.zip")
-    return redirect(url_for('main.courses'))
-
-
 @main.route("/courses/view_file/<path:filename>")
 @login_required
 def view_file(filename):
@@ -330,21 +301,26 @@ def file_download(filepath):
         return render_template("404.html", message="File does not exist")
     
 
-@main.route("/courses/getdownloadaccess", methods=['POST', 'GET'])
+@main.route("/courses/toggle_bookmark", methods=['POST'])
 @login_required
-def getdownloadacess():
-    current_user_details = get_current_user_details(current_user.username)
-    message = ''
-    if request.method == "POST":
-        downloadtoken = request.form.get('downloadtoken')
-        if downloadtoken == os.getenv('downloadtoken', ''):
-            current_user_details.downloadaccess = True
-            commit_current_user_details(current_user_details)
-            return redirect(url_for('main.courses'))
-        else:
-            message = 'Please enter correct Download Token and try again.'
-    return render_template("downloadaccess.html", message=message)
-    
+def toggle_bookmark():
+    folder = request.form.get("folder")
+    course_dir_val = request.form.get("course_dir")
+    if is_bookmarked(current_user.username, folder, course_dir_val):
+        remove_bookmark(current_user.username, folder, course_dir_val)
+    else:
+        add_bookmark(current_user.username, folder, course_dir_val)
+    return redirect(request.referrer or url_for('main.courses'))
+
+
+@main.route("/courses/goto_bookmark/<int:bookmark_id>")
+@login_required
+def goto_bookmark(bookmark_id):
+    bookmark = get_bookmark_by_id(bookmark_id)
+    if bookmark and bookmark.username == current_user.username:
+        commit_current_path_details(current_user.username, bookmark.course_dir, bookmark.course_name)
+    return redirect(url_for('main.courses'))
+
 
 @main.errorhandler(404)
 def page_not_found(e):
