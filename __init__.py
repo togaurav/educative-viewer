@@ -23,6 +23,10 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_FILE_PATH}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['UPLOAD_FOLDER'] = temp_folder_path
+    
+    from datetime import timedelta
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=365)
+    app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=365)
 
     # load course dir as templates folder
     course_dir = os.getenv('course_dir', '.')
