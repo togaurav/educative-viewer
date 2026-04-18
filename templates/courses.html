@@ -27,6 +27,22 @@
         .ui-datepicker-calendar {
             display: none;
         }
+
+        @media screen and (max-width: 1400px) {
+            .navbar-dropdown {
+                display: none !important;
+                position: absolute;
+                background-color: #000;
+                width: 100%;
+                left: 0;
+                top: 100%;
+                z-index: 50;
+            }
+
+            .navbar-dropdown.show-dropdown {
+                display: block !important;
+            }
+        }
     </style>
     <script>
         window.addEventListener('DOMContentLoaded', function () {
@@ -58,7 +74,7 @@
                         [([(= endif =)])]
                         [([(= if current_user.is_authenticated =)])]
                         <div class="navbar-item has-dropdown is-hoverable">
-                            <a class="navbar-link">
+                            <a class="navbar-link" onclick="this.nextElementSibling.classList.toggle('show-dropdown')" style="cursor: pointer;">
                                 Bookmarks
                             </a>
                             <div class="navbar-dropdown is-right" style="background-color: #000;">
