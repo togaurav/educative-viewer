@@ -27,6 +27,15 @@ def create_app():
     from datetime import timedelta
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=365)
     app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=365)
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SECURE'] = True
+    app.config['SESSION_COOKIE_PATH'] = '/'
+    app.config['REMEMBER_COOKIE_SECURE'] = True
+    app.config['REMEMBER_COOKIE_HTTPONLY'] = True
+    app.config['REMEMBER_COOKIE_SAMESITE'] = 'Lax'
+    app.config['REMEMBER_COOKIE_PATH'] = '/'
+    app.config['SESSION_REFRESH_EACH_REQUEST'] = True
 
     # load course dir as templates folder
     course_dir = os.getenv('course_dir', '.')
