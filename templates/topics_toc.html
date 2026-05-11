@@ -132,11 +132,54 @@
                 Your browser does not support the video tag.
             </video>
             <script>
-                if ('mediaSession' in navigator) {
+                (function() {
                     const video = document.getElementById('course-video');
-                    if (video) {
+                    if (!video) return;
+
+                    // --- Picture-in-Picture: auto-enter when app is minimized ---
+                    let userPausedManually = false;
+
+                    video.addEventListener('pause', () => {
+                        if (document.visibilityState === 'visible') {
+                            userPausedManually = true;
+                        }
+                    });
+
+                    video.addEventListener('play', () => {
+                        userPausedManually = false;
+                    });
+
+                    // Auto PiP when the PWA goes to background
+                    document.addEventListener('visibilitychange', () => {
+                        if (document.visibilityState === 'hidden') {
+                            if (document.pictureInPictureEnabled && video.readyState >= 2 && !video.paused) {
+                                video.requestPictureInPicture().catch(() => {});
+                            }
+                        } else if (document.visibilityState === 'visible') {
+                            if (document.pictureInPictureElement) {
+                                document.exitPictureInPicture().catch(() => {});
+                            }
+                            if (!userPausedManually && video.paused) {
+                                video.play().catch(() => {});
+                            }
+                        }
+                    });
+
+                    // iOS webkit PiP fallback
+                    if (typeof video.webkitSetPresentationMode === 'function') {
+                        document.addEventListener('visibilitychange', () => {
+                            if (document.visibilityState === 'hidden' && !video.paused) {
+                                video.webkitSetPresentationMode('picture-in-picture');
+                            } else if (document.visibilityState === 'visible') {
+                                video.webkitSetPresentationMode('inline');
+                            }
+                        });
+                    }
+
+                    // --- Media Session API for lock screen / control center ---
+                    if ('mediaSession' in navigator) {
                         const updateMetadata = () => {
-                            navigator.mediaSession.metadata = new MediaSessionMetadata({
+                            navigator.mediaSession.metadata = new MediaMetadata({
                                 title: '[([(current_topic)])]',
                                 artist: 'Educative Viewer',
                                 album: '[([(folder)])]',
@@ -157,10 +200,12 @@
 
                         navigator.mediaSession.setActionHandler('play', () => { video.play(); });
                         navigator.mediaSession.setActionHandler('pause', () => { video.pause(); });
-                        navigator.mediaSession.setActionHandler('seekbackward', (details) => { video.currentTime -= (details.seekOffset || 10); });
-                        navigator.mediaSession.setActionHandler('seekforward', (details) => { video.currentTime += (details.seekOffset || 10); });
+                        navigator.mediaSession.setActionHandler('seekbackward', (d) => { video.currentTime -= (d.seekOffset || 10); });
+                        navigator.mediaSession.setActionHandler('seekforward', (d) => { video.currentTime += (d.seekOffset || 10); });
+
+                        updateMetadata();
                     }
-                }
+                })();
             </script>
             [([(= else =)])]
             <iframe src="[([(content_url)])]"
