@@ -135,17 +135,30 @@
                 if ('mediaSession' in navigator) {
                     const video = document.getElementById('course-video');
                     if (video) {
-                        navigator.mediaSession.metadata = new MediaSessionMetadata({
-                            title: '[([(current_topic)])]',
-                            artist: 'Educative Viewer',
-                            album: '[([(folder)])]',
-                            artwork: [
-                                { src: '/edu-viewer/static/asset/pwa-icon.png', sizes: '512x512', type: 'image/png' }
-                            ]
+                        const updateMetadata = () => {
+                            navigator.mediaSession.metadata = new MediaSessionMetadata({
+                                title: '[([(current_topic)])]',
+                                artist: 'Educative Viewer',
+                                album: '[([(folder)])]',
+                                artwork: [
+                                    { src: '/edu-viewer/static/asset/pwa-icon.png', sizes: '512x512', type: 'image/png' }
+                                ]
+                            });
+                        };
+
+                        video.addEventListener('play', () => {
+                            updateMetadata();
+                            navigator.mediaSession.playbackState = 'playing';
                         });
 
-                        navigator.mediaSession.setActionHandler('play', () => video.play());
-                        navigator.mediaSession.setActionHandler('pause', () => video.pause());
+                        video.addEventListener('pause', () => {
+                            navigator.mediaSession.playbackState = 'paused';
+                        });
+
+                        navigator.mediaSession.setActionHandler('play', () => { video.play(); });
+                        navigator.mediaSession.setActionHandler('pause', () => { video.pause(); });
+                        navigator.mediaSession.setActionHandler('seekbackward', (details) => { video.currentTime -= (details.seekOffset || 10); });
+                        navigator.mediaSession.setActionHandler('seekforward', (details) => { video.currentTime += (details.seekOffset || 10); });
                     }
                 }
             </script>

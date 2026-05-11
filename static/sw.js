@@ -15,6 +15,11 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+    // Bypass service worker for media files to allow range requests (crucial for iOS background play)
+    if (event.request.url.match(/\.(mp4|webm|m4v|avi|mkv|wmv|mp3|webm|wav)$/i) || event.request.headers.get('range')) {
+        return;
+    }
+
     event.respondWith(
         caches.match(event.request).then((response) => {
             return response || fetch(event.request);
