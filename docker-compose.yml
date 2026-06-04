@@ -13,6 +13,7 @@ services:
     volumes:
       - /Users/om/Grokking:/courses/Grokking
       - /Volumes/ED/CodingBlocks:/courses/CodingBlocks
+      - /Volumes/ED/Others:/courses/Others
       - .:/app
       - ~/EducativeViewer:/root/EducativeViewer
     working_dir: /app
